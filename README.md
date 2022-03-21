@@ -27,3 +27,12 @@ $ npm start
 
 
 [midway]: https://midwayjs.org
+
+
+### install python libraries
+```shell
+$ ./node_modules/.bin/bip install <package-name>
+```
+
+### online ws test tool
+https://amritb.github.io/socketio-client-tool/

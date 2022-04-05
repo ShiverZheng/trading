@@ -1,7 +1,7 @@
 export enum SocketRequestEvent {
-  GREET = 'greet',
+  PRICE = 'price',
 }
 
 export enum SocketResponseEvent {
-  GREET = 'greetResult',
+  PRICE = 'priceResult',
 }

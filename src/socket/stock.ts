@@ -26,8 +26,9 @@ export class StockSocketController {
 
   @OnWSMessage(SocketRequestEvent.PRICE)
   @WSEmit(SocketResponseEvent.PRICE)
-  async gotMessage() {
-    const res = this.stockService.getPrice();
+  async gotMessage(code: string, startAt: string, endAt: string) {
+    // '000002.XSHE', '2014-01-01', '2014-1-03'
+    const res = this.stockService.getPrice(code, startAt, endAt);
     return res;
   }
 }

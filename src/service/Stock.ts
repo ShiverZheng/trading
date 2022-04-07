@@ -37,22 +37,21 @@ export interface Price {
 
 @Provide()
 export default class StockService {
-  async getPrice() {
-    const res = jqdatasdk.get_price('000002.XSHE', '2014-01-01', '2014-1-03');
-    const data = res.to_json() as JoinQuotePrice[];
+  async getPrice(code: string, startAt: string, endAt: string) {
+    const res = jqdatasdk.get_price(code, startAt, endAt);
+    const rows = res.itertuples();
     const formatedData: Price[] = [];
-    const allTS = Object.keys(data['open']);
-    for (const timestamp of allTS) {
+    for (const row of rows) {
       formatedData.push({
-        timestamp,
-        open: data['open'][timestamp],
-        close: data['close'][timestamp],
-        high: data['high'][timestamp],
-        low: data['low'][timestamp],
-        volume: data['volume'][timestamp],
-        money: data['money'][timestamp],
+        timestamp: row[0],
+        open: row['open'],
+        close: row['close'],
+        high: row['high'],
+        low: row['low'],
+        volume: row['volume'],
+        money: row['money'],
       });
     }
-    return formatedData;
+    return JSON.stringify(formatedData);
   }
 }

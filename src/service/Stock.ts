@@ -32,7 +32,7 @@ export interface Price {
   high: number;
   low: number;
   volume: number;
-  money: number;
+  money?: number;
 }
 
 @Provide()
@@ -49,7 +49,6 @@ export default class StockService {
         high: row['high'],
         low: row['low'],
         volume: row['volume'],
-        money: row['money'],
       });
     }
     return JSON.stringify(formatedData);

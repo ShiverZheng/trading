@@ -1,17 +1,31 @@
+import { join } from 'path';
+import * as Koa from '@midwayjs/koa';
+import * as info from '@midwayjs/info';
+import * as SocketIO from '@midwayjs/socketio';
 import { Configuration, App } from '@midwayjs/decorator';
-import { Application } from '@midwayjs/socketio';
-import { ILifeCycle } from '@midwayjs/core';
+import { DefaultErrorFilter } from './filter/default.filter';
+import { ReportMiddleware } from './middleware/report.middleware';
 
 @Configuration({
   conflictCheck: true,
+  imports: [
+    Koa,
+    SocketIO,
+    {
+      component: info,
+      enabledEnvironment: ['local'],
+    },
+  ],
+  importConfigs: [join(__dirname, './config')],
 })
-export class ContainerLifeCycle implements ILifeCycle {
+export class ContainerLifeCycle {
   @App()
-  app: Application;
+  app: Koa.Application;
 
   async onReady() {
-    this.app.on('connection', socket => {
-      console.log(socket.id);
-    });
+    // add middleware
+    this.app.useMiddleware([ReportMiddleware]);
+    // add filter
+    this.app.useFilter([DefaultErrorFilter]);
   }
 }

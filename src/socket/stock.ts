@@ -1,40 +1,62 @@
 import {
+  App,
+  Inject,
+  Provide,
   WSController,
   OnWSMessage,
-  Provide,
   OnWSConnection,
-  Inject,
-  WSEmit,
   OnWSDisConnection,
+  MidwayFrameworkType,
 } from '@midwayjs/decorator';
-import { Context } from '@midwayjs/socketio';
-import StockService from '@/service/Stock';
-import { SocketRequestEvent, SocketResponseEvent } from '@/interface';
+import { Context, Application } from '@midwayjs/socketio';
+import StockService, { Unit } from '@/service/Stock';
+import {
+  SocketRequestEvent,
+  SocketResponseEvent,
+} from '@/common/models/messages';
 
 @Provide()
 @WSController('/')
 export class StockSocketController {
+  private clientWithCode: Map<string, string> = new Map();
+
+  private timer: NodeJS.Timer;
+
   @Inject()
   ctx: Context;
+
+  @App(MidwayFrameworkType.WS_IO)
+  app: Application;
 
   @Inject()
   stockService: StockService;
 
   @OnWSConnection()
   async onConnectionMethod() {
-    console.log('on client connect: ', this.ctx.id);
+    this.timer = setInterval(() => this.syncRealtimePrice(), 10 * 1000);
+  }
+
+  async syncRealtimePrice() {
+    const ids = await this.app.allSockets();
+    for (const id of ids) {
+      const code = this.clientWithCode.get(id);
+      if (code) {
+        const data = await this.stockService.getBars([code], 1, Unit['1m']);
+        this.app.to(id).emit(SocketResponseEvent.PRICE, data);
+      }
+    }
   }
 
   @OnWSDisConnection()
   onWSDisConnectionMethod() {
-    console.log('on client was disconnected: ', this.ctx.id);
+    this.clientWithCode.delete(this.ctx.id);
+    if (!this.clientWithCode.size) {
+      clearInterval(this.timer);
+    }
   }
 
   @OnWSMessage(SocketRequestEvent.PRICE)
-  @WSEmit(SocketResponseEvent.PRICE)
-  async gotMessage(code: string, startAt: string, endAt: string) {
-    // '000002.XSHE', '2014-01-01', '2014-1-03'
-    const res = await this.stockService.getPrice(code, startAt, endAt);
-    return res;
+  async realtimePrice(code: string) {
+    this.clientWithCode.set(this.ctx.id, code);
   }
 }
